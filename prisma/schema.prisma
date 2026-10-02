@@ -1,0 +1,367 @@
+// Generated schema — modeled after beautyhqio conventions.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  active       Boolean @default(true)
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(ANALYST)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  ANALYST
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String?
+  action    String
+  entity    String
+  entityId  String?
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+model WorkflowAnalysis {
+ id String @id @default(cuid())
+ actorId String
+ workflow String
+ subjectEntity String
+ subjectId String
+ input Json
+ evidence Json
+ evidenceHash String
+ result Json
+ model String
+ receipt String?
+ createdAt DateTime @default(now())
+ @@index([workflow, createdAt])
+}
+model RecordReview {
+ id String @id @default(cuid())
+ actorId String
+ entity String
+ entityId String
+ version String
+ reason String
+ createdAt DateTime @default(now())
+ @@unique([entity, entityId, version, actorId])
+}
+model UsageBucket {
+ id String @id
+ calls Int
+}
+model IssuedCredential {
+ token String @id
+ entity String
+ entityId String
+ version String
+ assertion Json
+ createdAt DateTime @default(now())
+ revokedAt DateTime?
+ @@index([entity, entityId, createdAt])
+}
+
+model DomainArtifact {
+ id String @id @default(cuid())
+ subjectEntity String
+ subjectId String
+ title String
+ content String
+ contentHash String
+ actorId String
+ approvedBy String?
+ createdAt DateTime @default(now())
+ @@index([subjectEntity, subjectId])
+}
+
+model RecordApproval {
+ id String @id
+ version String
+}
+model DomainExecution {
+ id String @id
+ actorId String
+ connectorId String
+ action String
+ subjectEntity String
+ subjectId String
+ version String
+ status String
+ result Json?
+ createdAt DateTime @default(now())
+}
+
+model WorkSession {
+ id String @id @default(cuid())
+ actorId String
+ respondentId String
+ subjectEntity String
+ subjectId String
+ questions Json
+ answers Json
+ currentQuestion String?
+ status String
+ deadline DateTime
+ createdAt DateTime @default(now())
+ @@index([respondentId, createdAt])
+}
+model SessionMedia {
+ id String @id @default(cuid())
+ sessionId String
+ questionId String
+ actorId String
+ contentType String
+ bytes Bytes
+ contentHash String
+ createdAt DateTime @default(now())
+ @@index([sessionId])
+}
+
+model AppSetting {
+ id String @id
+ value Json
+ updatedAt DateTime @updatedAt
+}
+
+model AcquisitionProject {
+ id String @id @default(cuid())
+ name String
+ projectNumber String
+ utility String
+ corridor String
+ jurisdiction String
+ targetAt DateTime
+ status String @default("Draft")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ inverseAcquisitionParcel_acquisitionProjectId AcquisitionParcel[] @relation("AcquisitionParcel_acquisitionProjectId")
+ inverseOwnershipInterest_acquisitionProjectId OwnershipInterest[] @relation("OwnershipInterest_acquisitionProjectId")
+ inverseParcelAppraisal_acquisitionProjectId ParcelAppraisal[] @relation("ParcelAppraisal_acquisitionProjectId")
+ inverseEasementOffer_acquisitionProjectId EasementOffer[] @relation("EasementOffer_acquisitionProjectId")
+ inverseNegotiationEvent_acquisitionProjectId NegotiationEvent[] @relation("NegotiationEvent_acquisitionProjectId")
+ inverseAcquisitionAgreement_acquisitionProjectId AcquisitionAgreement[] @relation("AcquisitionAgreement_acquisitionProjectId")
+ inverseRecordingReceipt_acquisitionProjectId RecordingReceipt[] @relation("RecordingReceipt_acquisitionProjectId")
+ inverseCompensationPayment_acquisitionProjectId CompensationPayment[] @relation("CompensationPayment_acquisitionProjectId")
+ inverseOperationalTask_acquisitionProjectId OperationalTask[] @relation("OperationalTask_acquisitionProjectId")
+ inverseRuleVersion_acquisitionProjectId RuleVersion[] @relation("RuleVersion_acquisitionProjectId")
+ inverseDocumentRequirement_acquisitionProjectId DocumentRequirement[] @relation("DocumentRequirement_acquisitionProjectId")
+}
+
+model AcquisitionParcel {
+ id String @id @default(cuid())
+ name String
+ parcelNumber String
+ ownerName String
+ areaSqMeters Float
+ address String
+ surveyReference String
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionProjectId AcquisitionProject @relation("AcquisitionParcel_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+ inverseOwnershipInterest_acquisitionParcelId OwnershipInterest[] @relation("OwnershipInterest_acquisitionParcelId")
+ inverseParcelAppraisal_acquisitionParcelId ParcelAppraisal[] @relation("ParcelAppraisal_acquisitionParcelId")
+ inverseEasementOffer_acquisitionParcelId EasementOffer[] @relation("EasementOffer_acquisitionParcelId")
+ inverseNegotiationEvent_acquisitionParcelId NegotiationEvent[] @relation("NegotiationEvent_acquisitionParcelId")
+ inverseAcquisitionAgreement_acquisitionParcelId AcquisitionAgreement[] @relation("AcquisitionAgreement_acquisitionParcelId")
+ inverseRecordingReceipt_acquisitionParcelId RecordingReceipt[] @relation("RecordingReceipt_acquisitionParcelId")
+ inverseCompensationPayment_acquisitionParcelId CompensationPayment[] @relation("CompensationPayment_acquisitionParcelId")
+}
+
+model OwnershipInterest {
+ id String @id @default(cuid())
+ title String
+ acquisitionParcelId String
+ party String
+ interestType String
+ sharePercent Float
+ evidence String
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionParcelId AcquisitionParcel @relation("OwnershipInterest_acquisitionParcelId", fields: [acquisitionParcelId], references: [id], onDelete: Restrict)
+ linkedAcquisitionProjectId AcquisitionProject @relation("OwnershipInterest_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model ParcelAppraisal {
+ id String @id @default(cuid())
+ title String
+ acquisitionParcelId String
+ appraiser String
+ valuedAt DateTime
+ amountCents Int
+ basis String
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionParcelId AcquisitionParcel @relation("ParcelAppraisal_acquisitionParcelId", fields: [acquisitionParcelId], references: [id], onDelete: Restrict)
+ linkedAcquisitionProjectId AcquisitionProject @relation("ParcelAppraisal_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model EasementOffer {
+ id String @id @default(cuid())
+ title String
+ acquisitionParcelId String
+ offeredAt DateTime
+ amountCents Int
+ terms String
+ responseDueAt DateTime
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionParcelId AcquisitionParcel @relation("EasementOffer_acquisitionParcelId", fields: [acquisitionParcelId], references: [id], onDelete: Restrict)
+ linkedAcquisitionProjectId AcquisitionProject @relation("EasementOffer_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model NegotiationEvent {
+ id String @id @default(cuid())
+ title String
+ acquisitionParcelId String
+ occurredAt DateTime
+ representative String
+ notes String
+ nextAction String
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionParcelId AcquisitionParcel @relation("NegotiationEvent_acquisitionParcelId", fields: [acquisitionParcelId], references: [id], onDelete: Restrict)
+ linkedAcquisitionProjectId AcquisitionProject @relation("NegotiationEvent_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model AcquisitionAgreement {
+ id String @id @default(cuid())
+ title String
+ acquisitionParcelId String
+ version String
+ compensationCents Int
+ terms String
+ signatureEvidence String?
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionParcelId AcquisitionParcel @relation("AcquisitionAgreement_acquisitionParcelId", fields: [acquisitionParcelId], references: [id], onDelete: Restrict)
+ linkedAcquisitionProjectId AcquisitionProject @relation("AcquisitionAgreement_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model RecordingReceipt {
+ id String @id @default(cuid())
+ title String
+ acquisitionParcelId String
+ recorder String
+ documentNumber String
+ recordedAt DateTime
+ receipt String
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionParcelId AcquisitionParcel @relation("RecordingReceipt_acquisitionParcelId", fields: [acquisitionParcelId], references: [id], onDelete: Restrict)
+ linkedAcquisitionProjectId AcquisitionProject @relation("RecordingReceipt_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model CompensationPayment {
+ id String @id @default(cuid())
+ title String
+ acquisitionParcelId String
+ paidAt DateTime
+ amountCents Int
+ payee String
+ receipt String
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionParcelId AcquisitionParcel @relation("CompensationPayment_acquisitionParcelId", fields: [acquisitionParcelId], references: [id], onDelete: Restrict)
+ linkedAcquisitionProjectId AcquisitionProject @relation("CompensationPayment_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model OperationalTask {
+ id String @id @default(cuid())
+ title String
+ owner String
+ priority String
+ startAt DateTime
+ dueAt DateTime
+ done Boolean
+ notes String?
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionProjectId AcquisitionProject @relation("OperationalTask_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model RuleVersion {
+ id String @id @default(cuid())
+ title String
+ jurisdiction String
+ version String
+ effectiveAt DateTime
+ expiresAt DateTime?
+ sourceUrl String
+ requirementText String
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionProjectId AcquisitionProject @relation("RuleVersion_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
+
+model DocumentRequirement {
+ id String @id @default(cuid())
+ title String
+ category String
+ requiredBy DateTime
+ sourceReference String
+ evidenceReference String?
+ reviewNotes String?
+ status String @default("Draft")
+ acquisitionProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([acquisitionProjectId])
+ linkedAcquisitionProjectId AcquisitionProject @relation("DocumentRequirement_acquisitionProjectId", fields: [acquisitionProjectId], references: [id], onDelete: Restrict)
+}
